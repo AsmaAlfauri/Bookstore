@@ -1,13 +1,7 @@
 const express = require("express");
-const {
-  createOrder,
-  getMyOrders,
-  getAllOrders,
-  updateOrderStatus,
-} = require("../controllers/orderController");
-
 const { protect } = require("../middleware/authMiddleware");
 const { hasPermission } = require("../middleware/permissionMiddleware");
+const { createOrder, getMyOrders, getAllOrders, updateOrderStatus } = require("../controllers/orderController");
 
 const router = express.Router();
 
@@ -17,11 +11,6 @@ router.get("/my", protect, getMyOrders);
 
 // Admin
 router.get("/", protect, hasPermission("VIEW_ORDERS"), getAllOrders);
-router.put(
-  "/:id/status",
-  protect,
-  hasPermission("VIEW_ORDERS"),
-  updateOrderStatus
-);
+router.put("/:id/status", protect, hasPermission("VIEW_ORDERS"), updateOrderStatus);
 
 module.exports = router;
