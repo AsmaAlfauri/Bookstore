@@ -51,3 +51,39 @@ exports.deleteBook = asyncHandler(async (req, res) => {
   await book.deleteOne();
   res.json({ message: "Book deleted" });
 });
+
+
+// @desc Get all books with pagination, search, filter
+// @route GET /api/books
+exports.getBooks = asyncHandler(async (req, res) => {
+  const pageSize = Number(req.query.limit) || 10;
+  const page = Number(req.query.page) || 1;
+  const keyword = req.query.keyword
+    ? {
+        title: {
+          $regex: req.query.keyword,
+          $options: "i",
+        },
+      }
+    : {};
+
+  const categoryFilter = req.query.category
+    ? { category: req.query.category }
+    : {};
+
+  const filter = { ...keyword, ...categoryFilter };
+
+  const count = await Book.countDocuments(filter);
+
+  const books = await Book.find(filter)
+    .sort({ createdAt: -1 })
+    .skip(pageSize * (page - 1))
+    .limit(pageSize);
+
+  res.json({
+    books,
+    page,
+    pages: Math.ceil(count / pageSize),
+    total: count,
+  });
+});

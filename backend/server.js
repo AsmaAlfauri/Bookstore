@@ -19,7 +19,7 @@ app.use("/api/auth", require("./src/routes/authRoutes"));
 app.use("/api/users", require("./src/routes/userRoutes"));
 app.use("/api/books", require("./src/routes/bookRoutes"));
 app.use("/api/orders", require("./src/routes/orderRoutes"));
-
+paymentRoutes
 //
 app.use(require("./src/middleware/errorMiddleware"));
 
