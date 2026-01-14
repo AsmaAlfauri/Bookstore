@@ -1,3 +1,4 @@
+// Middleware to validate request body using Joi schemas
 exports.validate = (schema) => (req, res, next) => {
   const { error } = schema.validate(req.body);
   if (error) {
