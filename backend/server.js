@@ -1,54 +1,48 @@
+require("dotenv").config();
 const express = require("express");
-const dotenv = require("dotenv");
-const cors = require("cors");
-const connectDB = require("./src/config/db");
-
-dotenv.config();
-connectDB();
-
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
-app.get("/", (req, res) => {
-  res.send("API is running...");
-});
-
-// Security + Rate Limiting
+const morgan = require("morgan");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const rateLimit = require("express-rate-limit");
+const connectDB = require("./src/config/db");
+const errorHandler = require("./src/middleware/errorMiddleware");
 
-// Helmet headers
-app.use(helmet());
+const app = express();
 
-// Data sanitization against NoSQL injection
-app.use(mongoSanitize());
+// Connect to MongoDB
+connectDB();
 
-// Prevent XSS attacks
-app.use(xss());
+// Middleware
+app.use(express.json()); // body parser
+app.use(helmet()); // security headers
+app.use(mongoSanitize()); // sanitize data
+app.use(xss()); // prevent XSS
 
-// Rate limiting
+// Logger (dev only)
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
+
+// Rate limiter
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 100,
 });
 app.use(limiter);
 
-
-// 
-// routers
+// Routes
 app.use("/api/auth", require("./src/routes/authRoutes"));
 app.use("/api/users", require("./src/routes/userRoutes"));
 app.use("/api/books", require("./src/routes/bookRoutes"));
 app.use("/api/orders", require("./src/routes/orderRoutes"));
-paymentRoutes
-//
-app.use(require("./src/middleware/errorMiddleware"));
+app.use("/api/payment", require("./src/routes/paymentRoutes"));
 
+// Error middleware (must be last)
+app.use(errorHandler);
+
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
-  console.log(`Server running on port ${PORT}`)
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`)
 );

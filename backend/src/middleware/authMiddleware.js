@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
+// حماية routes: لازم تسجيل دخول
 exports.protect = async (req, res, next) => {
   let token;
 
@@ -10,26 +11,33 @@ exports.protect = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(" ")[1];
-
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      req.user = await User.findById(decoded.id).select("-password") .populate("role");
+      // populate role for permission checks
+      req.user = await User.findById(decoded.id)
+        .select("-password")
+        .populate("role");
 
       next();
     } catch (error) {
-      return res.status(401).json({ message: "Not authorized, token failed" });
+      res.status(401);
+      throw new Error("Not authorized, token failed");
     }
   }
 
   if (!token) {
-    return res.status(401).json({ message: "Not authorized, no token" });
+    res.status(401);
+    throw new Error("Not authorized, no token");
   }
 };
 
+// Admin middleware (Optional, legacy)
 exports.admin = (req, res, next) => {
-  if (req.user && req.user.role === "admin") {
+  // Enterprise way: role populated
+  if (req.user && req.user.role && req.user.role.name === "admin") {
     next();
   } else {
-    res.status(403).json({ message: "Admin access only" });
+    res.status(403);
+    throw new Error("Admin access only");
   }
 };
